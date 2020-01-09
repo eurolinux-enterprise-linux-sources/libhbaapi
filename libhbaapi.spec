@@ -1,25 +1,16 @@
-%define buildversion 2.2.5
-
 Name:           libhbaapi
-Version:        2.2
-Release:        14%{?dist}
+Version:        2.2.6
+Release:        1%{?dist}
 Summary:        SNIA HBAAPI library
-
 Group:          System Environment/Libraries
 License:        SNIA
-URL:            http://sourceforge.net/projects/hbaapi/
-Source0:        http://downloads.sourceforge.net/hbaapi/hbaapi_src_%{version}.tgz
-# This source was cloned from upstream git. To create tarball, run:
-# git clone git://open-fcoe.org/openfc/hbaapi_build.git
-# cd hbaapi_build
-# git archive v%{buildversion} > ../hbaapi_build.tar
-# cd .. && gzip hbaapi_build.tar
-Source1:        hbaapi_build_%{buildversion}.tar.gz
+URL:            http://open-fcoe.org
+# This source was cloned from upstream git (libHBAAPI)
+Source:         %{name}-%{version}.tar.bz2
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Patch0:         libhbaapi-2.2-9-dl-linking.patch
 
 BuildRequires:  automake libtool
-# Requires:       
 
 %description
 The SNIA HBA API library. C-level project to manage
@@ -35,37 +26,31 @@ Requires:       pkgconfig
 The %{name}-devel package contains libraries and header files for
 developing applications that use %{name}.
 
-
 %prep
-%setup -q -n hbaapi_src_2.2
-%setup -q -T -D -a 1 -n hbaapi_src_2.2
+%setup
+%setup
 %patch0 -p1 -b .ld-linking
-
 
 %build
 ./bootstrap.sh
 %configure --disable-static
 make %{?_smp_mflags}
 
-
 %install
 rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
 find $RPM_BUILD_ROOT -name '*.la' -exec rm -f {} ';'
 
-
 %clean
 rm -rf $RPM_BUILD_ROOT
-
 
 %post -p /sbin/ldconfig
 
 %postun -p /sbin/ldconfig
 
-
 %files
 %defattr(-,root,root,-)
-%doc readme.txt COPYING
+%doc COPYING
 %config(noreplace) %verify(not md5 size mtime) %{_sysconfdir}/hba.conf
 %{_libdir}/*.so.*
 
@@ -75,8 +60,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/*.so
 %{_libdir}/pkgconfig/*.pc
 
-
 %changelog
+* Tue Oct 09 2012 Petr Šabata <contyk@redhat.com> - 2.2.6-1
+- Switch to the Open-FCoE.org libHBAAPI fork (#862386)
+
 * Tue Mar 27 2012 Petr Šabata <contyk@redhat.com> - 2.2-14
 - Do not verify hba.conf size, mtime and checksum (#806731)
 
