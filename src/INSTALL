@@ -1,6 +1,5 @@
 This document explains how to build the sourceforge
-HBA API wraper library from source using the hbaapi_build
-repository.
+HBA API wraper library from source.
 
 ##
 # HBA API Wrapper Library
@@ -16,10 +15,7 @@ DEPENDENCIES
 
 PROCESS
 
-1) Obtain the source tarball from sourceforge
-   http://sourceforge.net/projects/hbaapi/
-
-2) Bootstrap, configure, make and make install
+1) Bootstrap, configure, make and make install
    # ./bootstrap.sh
    # rpm --eval "%configure" | sh
    # make

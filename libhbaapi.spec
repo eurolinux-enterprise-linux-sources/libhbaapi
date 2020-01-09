@@ -1,12 +1,12 @@
 Name:           libhbaapi
-Version:        2.2.6
+Version:        2.2.9
 Release:        1%{?dist}
 Summary:        SNIA HBAAPI library
 Group:          System Environment/Libraries
 License:        SNIA
 URL:            http://open-fcoe.org
 # This source was cloned from upstream git (libHBAAPI)
-Source:         %{name}-%{version}.tar.bz2
+Source:         %{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Patch0:         libhbaapi-2.2-9-dl-linking.patch
 
@@ -61,6 +61,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/pkgconfig/*.pc
 
 %changelog
+* Thu Jun 20 2013 Petr Šabata <contyk@redhat.com> - 2.2.9-1
+- Update to 2.2.9, documentation and build scripts updates (#829815)
+
 * Tue Oct 09 2012 Petr Šabata <contyk@redhat.com> - 2.2.6-1
 - Switch to the Open-FCoE.org libHBAAPI fork (#862386)
 

@@ -28,22 +28,13 @@
  *************************************************************************
  */
 
-#ifdef WIN32
-#include <windows.h>
-#include <string.h>
-/*
- * Next define forces entry points in the dll to be exported
- * See hbaapi.h to see what it does.
- */
-#define HBAAPI_EXPORTS
-#else
 #include <stddef.h>
 #include <dlfcn.h>
 #include <stdlib.h>
 #include <strings.h>
 #include <string.h>
 #define __USE_XOPEN
-#endif
+
 #include <stdio.h>
 #include <time.h>
 #include "hbaapi.h"
@@ -75,25 +66,6 @@ int _hbaapi_debuglevel = 0;
 FILE *_hbaapi_debug_fd = NULL;
 int _hbaapi_sysloginit = 0;
 #undef DEBUG
-#ifdef WIN32
-#define DEBUG(L, STR, A1, A2, A3)\
-    if ((L) <= _hbaapi_debuglevel) {\
-	if(_hbaapi_sysloginit == 0) {\
-	    openlog("HBAAPI", LOG_PID|LOG_ODELAY ,LOG_USER);\
-	    _hbaapi_sysloginit = 1;\
-	}\
-	syslog (LOG_INFO, (STR), (A1), (A2), (A3));\
-	if(_hbaapi_debug_fd == NULL) {\
-	    char _logFile[MAX_PATH]; \
-	    GetTempPath(MAX_PATH, _logFile); \
-	    strcat(_logFile, "HBAAPI.log"); \
-	    _hbaapi_debug_fd = fopen(_logFile, "a");\
-	}\
-        if(_hbaapi_debug_fd != NULL) {\
-	    fprintf(_hbaapi_debug_fd, #STR "\n", (A1), (A2), (A3));\
-	}\
-    }
-#else /* WIN32*/
 #define DEBUG(L, STR, A1, A2, A3)\
     if ((L) <= _hbaapi_debuglevel) {\
 	if(_hbaapi_sysloginit == 0) {\
@@ -108,8 +80,6 @@ int _hbaapi_sysloginit = 0;
 	    fprintf(_hbaapi_debug_fd, #STR  "\n", (A1), (A2), (A3));\
 	}\
     }
-#endif /* WIN32*/
-
 #else /* Not both USESYSLOG and USELOGFILE */
 #if defined(USESYSLOG)
 int _hbaapi_sysloginit = 0;
@@ -126,17 +96,6 @@ int _hbaapi_sysloginit = 0;
 #if defined(USELOGFILE)
 FILE *_hbaapi_debug_fd = NULL;
 #undef DEBUG
-#ifdef WIN32
-#define DEBUG(L, STR, A1, A2, A3) \
-    if((L) <= _hbaapi_debuglevel) {\
-	if(_hbaapi_debug_fd == NULL) {\
-	    char _logFile[MAX_PATH]; \
-	    GetTempPath(MAX_PATH, _logFile); \
-	    strcat(_logFile, "HBAAPI.log"); \
-	    _hbaapi_debug_fd = fopen(_logFile, "a");\
-        }\
-    }
-#else /* WIN32 */
 #define DEBUG(L, STR, A1, A2, A3) \
     if((L) <= _hbaapi_debuglevel) {\
 	if(_hbaapi_debug_fd == NULL) {\
@@ -146,7 +105,6 @@ FILE *_hbaapi_debug_fd = NULL;
 	    fprintf(_hbaapi_debug_fd, #STR "\n", (A1), (A2), (A3));\
 	}\
     }
-#endif /* WIN32 */
 #endif /* USELOGFILE */
 #endif /* Not both USELOGFILE and USESYSLOG */
 
@@ -165,10 +123,6 @@ FILE *_hbaapi_debug_fd = NULL;
 #define GRAB_MUTEX(M)			grab_mutex(M)
 #define RELEASE_MUTEX(M)		release_mutex(M)
 #define RELEASE_MUTEX_RETURN(M,RET)	release_mutex(M); return(RET)
-#elif defined (WIN32)
-#define GRAB_MUTEX(m)			EnterCriticalSection(m)
-#define RELEASE_MUTEX(m)		LeaveCriticalSection(m)
-#define RELEASE_MUTEX_RETURN(m, RET)	LeaveCriticalSection(m); return(RET)
 #else
 #define GRAB_MUTEX(M)
 #define RELEASE_MUTEX(M)
@@ -187,12 +141,8 @@ typedef enum {
 typedef struct hba_library_info {
     struct hba_library_info
 			*next;
-#ifdef WIN32
-    HINSTANCE		hLibrary;		/* Handle to a loaded DLL */
-#else
     char		*LibraryName;
     void*		hLibrary;		/* Handle to a loaded DLL */
-#endif
     char		*LibraryPath;
     HBA_ENTRYPOINTSV2	functionTable;		/* Function pointers */
     HBA_LIBRARY_STATUS	status;			/* info on this library */
@@ -207,9 +157,7 @@ HBA_LIBRARY_INFO *_hbaapi_librarylist = NULL;
 HBA_UINT32 _hbaapi_total_library_count = 0;
 #ifdef POSIX_THREADS
 pthread_mutex_t _hbaapi_LL_mutex = PTHREAD_MUTEX_INITIALIZER;
-#elif defined(WIN32)
-CRITICAL_SECTION _hbaapi_LL_mutex;
-#endif
+#endif /* POSIX_THREADS */
 
 /*
  * Individual adapter (hba) information
@@ -228,9 +176,7 @@ HBA_ADAPTER_INFO *_hbaapi_adapterlist = NULL;
 HBA_UINT32 _hbaapi_total_adapter_count = 0;
 #ifdef POSIX_THREADS
 pthread_mutex_t _hbaapi_AL_mutex = PTHREAD_MUTEX_INITIALIZER;
-#elif defined(WIN32)
-CRITICAL_SECTION _hbaapi_AL_mutex;
-#endif
+#endif /* POSIX_THREADS */
 
 /*
  * Call back registration
@@ -278,14 +224,7 @@ pthread_mutex_t _hbaapi_APE_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t _hbaapi_APSE_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t _hbaapi_TE_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t _hbaapi_LE_mutex = PTHREAD_MUTEX_INITIALIZER;
-#elif defined(WIN32)
-CRITICAL_SECTION _hbaapi_AAE_mutex;
-CRITICAL_SECTION _hbaapi_AE_mutex;
-CRITICAL_SECTION _hbaapi_APE_mutex;
-CRITICAL_SECTION _hbaapi_APSE_mutex;
-CRITICAL_SECTION _hbaapi_TE_mutex;
-CRITICAL_SECTION _hbaapi_LE_mutex;
-#endif
+#endif /* POSIX_THREADS */
 
 HBA_ADAPTERCALLBACK_ELEM **cb_lists_array[] = {
     &_hbaapi_adapterevents_callback_list,
@@ -478,27 +417,6 @@ WWN2str(char *buf, HBA_WWN *wwn) {
 }
 #endif
 
-#ifdef WIN32
-BOOL APIENTRY
-DllMain( HANDLE hModule,
-	 DWORD  ul_reason_for_call,
-	 LPVOID lpReserved
-    )
-{
-    switch (ul_reason_for_call)
-    {
-    case DLL_PROCESS_ATTACH:
-	break;
-    case DLL_PROCESS_DETACH:
-	break;
-    case DLL_THREAD_ATTACH:
-    case DLL_THREAD_DETACH:
-	break;
-    }
-    return TRUE;
-}
-#endif
-
 /*
  * Read in the config file and load all the specified vendor specific
  * libraries and perform the function registration exercise
@@ -518,151 +436,6 @@ HBA_LoadLibrary() {
     HBA_UINT32		libversion;
 
     /* Open configuration file from known location */
-#ifdef WIN32
-    LONG		lStatus;
-    HKEY		hkSniaHba, hkVendorLib;
-    FILETIME		ftLastWriteTime;
-    TCHAR		cSubKeyName[256];
-    DWORD		i, dwSize, dwType;
-    BYTE		byFileName[MAX_PATH];
-    HBA_LIBRARY_INFO	*lib_infop;
-
-    if(_hbaapi_librarylist != NULL) {
-	/* this is an app programming error */
-	return HBA_STATUS_ERROR;
-    }
-
-    lStatus = RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\SNIA\\HBA",
-			   0, KEY_READ, &hkSniaHba);
-    if (lStatus != ERROR_SUCCESS) {
-	/* ???Opportunity to send error msg, configuration error */
-	return HBA_STATUS_ERROR;
-    }
-    /*
-     * Enumerate all the subkeys. These have the form:
-     * HKLM\Software\SNIA\HBA\<Vendor id> - note that we don't care
-     * what the vendor id is
-     */
-    for (i = 0; ; i++) {
-	dwSize = 255;	/* how big the buffer is */
-	lStatus = RegEnumKeyEx(hkSniaHba, i,
-			       (char *)&cSubKeyName, &dwSize, NULL,
-			       NULL, NULL, &ftLastWriteTime);
-	if (lStatus == ERROR_NO_MORE_ITEMS) {
-	    break;	/* we're done */
-	} else if (lStatus == ERROR_MORE_DATA) { /* buffer not big enough */
-	    /* do whatever */
-	    ;
-	}
-	/* Now open the subkey that pertains to this vendor's library */
-	lStatus = RegOpenKeyEx(hkSniaHba, cSubKeyName, 0, KEY_READ,
-			       &hkVendorLib);
-	if (lStatus != ERROR_SUCCESS) {
-	    RegCloseKey(hkSniaHba);
-	    /* ???Opportunity to send error msg, installation error */
-	    return HBA_STATUS_ERROR; /* you may want to return something
-				      * else or keep trying */
-	}
-	/* The name of the library is contained in a REG_SZ Value
-	 * keyed to "LibraryFile" */
-	dwSize = MAX_PATH;
-	lStatus = RegQueryValueEx(hkVendorLib, "LibraryFile", NULL, &dwType,
-				  byFileName, &dwSize);
-	if (lStatus != ERROR_SUCCESS) {
-	    RegCloseKey(hkVendorLib);
-	    /* ???Opportunity to send error msg, installation error */
-	    continue;
-	}
-	lib_infop = (HBA_LIBRARY_INFO *)calloc(1, sizeof(HBA_LIBRARY_INFO));
-	if(lib_infop == NULL) {
-	    /* what is the right thing to do in MS land??? */
-	    RegCloseKey(hkVendorLib);
-	    /* ???Opportunity to send error msg, installation error */
-	    return(HBA_STATUS_ERROR);
-	}
-	lib_infop->status = HBA_LIBRARY_NOT_LOADED;
-	lib_infop->next = _hbaapi_librarylist;
-	lib_infop->index = _hbaapi_total_library_count;
-	_hbaapi_total_library_count++;
-	_hbaapi_librarylist = lib_infop;
-
-	/* Now I can try to load the library */
-	lib_infop->hLibrary = LoadLibrary(byFileName);
-	if (lib_infop->hLibrary == NULL){
-	    /* printf("unable to load library %s\n", librarypath); */
-	    /* ???Opportunity to send error msg, installation error */
-	    goto dud_library;
-	}
-	lib_infop->LibraryPath = strdup(byFileName);
-	DEBUG(1, "HBAAPI loading: %s\n", byFileName, 0, 0);
-
-	/* Call the registration function to get the list of pointers */
-	RegisterV2Func = (HBARegisterLibraryV2Func)
-	    GetProcAddress(lib_infop->hLibrary, "HBA_RegisterLibraryV2");
-	if (RegisterV2Func != NULL) {
-	    /* Load the function pointers directly into
-	     * the table of functions */
-	    status = ((RegisterV2Func)(&lib_infop->functionTable));
-	    if (status != HBA_STATUS_OK) {
-		/* library not loaded */
-		/* ???Opportunity to send error msg, library error? */
-		goto dud_library;
-	    }
-	} else {
-	    /* Maybe the vendor library is only Rev1 */
-	    RegisterFunc = (HBARegisterLibraryFunc)
-		GetProcAddress(lib_infop->hLibrary, "HBA_RegisterLibrary");
-	    if(RegisterFunc == NULL) {
-		/* ???Opportunity to send error msg, library error? */
-		goto dud_library;
-	    }
-	    /* Load the function points directly into
-	     * the Rev 2 table of functions */
-	    status = ((RegisterFunc)(
-		(HBA_ENTRYPOINTS *)(&lib_infop->functionTable)));
-	    if (status != HBA_STATUS_OK) {
-		/* library not loaded */
-		/* ???Opportunity to send error msg, library error? */
-		goto dud_library;
-	    }
-	}
-
-	/* successfully loaded library */
-	GetVersionFunc = lib_infop->functionTable.GetVersionHandler;
-	if (GetVersionFunc == NULL) {
-	    /* ???Opportunity to send error msg, library error? */
-	    goto dud_library;
-	}
-	/* Check the version of this library before loading */
-	/* Actually... This wrapper is compatible with version 1 */
-	libversion = ((GetVersionFunc)());
-#ifdef NOTDEF /* save for a later time... when it matters */
-	if (libversion < HBA_LIBVERSION) {
-	    goto dud_library;
-	}
-#endif
-	LoadLibraryFunc = lib_infop->functionTable.LoadLibraryHandler;
-	if (LoadLibraryFunc == NULL) {
-	    /* Hmmm, dont we need to flag this in a realy big way??? */
-	    /* How about messages to the system event logger ??? */
-	    /* ???Opportunity to send error msg, library error? */
-	    goto dud_library;
-	}
-	/* Initialize this library */
-	status = ((LoadLibraryFunc)());
-	if (status != HBA_STATUS_OK) {
-	    /* ???Opportunity to send error msg, library error? */
-	    continue;
-	}
-	/* successfully loaded library */
-	lib_infop->status = HBA_LIBRARY_LOADED;
-
-    dud_library: /* its also just the end of the loop */
-	RegCloseKey(hkVendorLib);
-    }
-    RegCloseKey(hkSniaHba);
-
-#else /* Unix as opposed to Win32 */
     FILE		*hbaconf;
     char		fullline[512];		/* line read from HBA.conf */
     char		*libraryname;		/* Read in from file HBA.conf */
@@ -853,7 +626,6 @@ HBA_LoadLibrary() {
 
     fclose(hbaconf);
 
-#endif /* WIN32 or UNIX */
 #ifdef POSIX_THREADS
     ret = pthread_mutex_init(&_hbaapi_LL_mutex, NULL);
     if(ret == 0) {
@@ -881,15 +653,6 @@ HBA_LoadLibrary() {
 	perror("pthread_mutec_init - HBA_LoadLibrary");
 	return(HBA_STATUS_ERROR);
     }
-#elif defined(WIN32)
-    InitializeCriticalSection(&_hbaapi_LL_mutex);
-    InitializeCriticalSection(&_hbaapi_AL_mutex);
-    InitializeCriticalSection(&_hbaapi_AAE_mutex);
-    InitializeCriticalSection(&_hbaapi_AE_mutex);
-    InitializeCriticalSection(&_hbaapi_APE_mutex);
-    InitializeCriticalSection(&_hbaapi_APSE_mutex);
-    InitializeCriticalSection(&_hbaapi_TE_mutex);
-    InitializeCriticalSection(&_hbaapi_LE_mutex);
 #endif
 
     /* At least one lib must be loaded */
@@ -927,15 +690,9 @@ HBA_FreeLibrary() {
 		/* Free this library */
 		status = ((FreeLibraryFunc)());
 	    }
-#ifdef WIN32
-	    FreeLibrary(lib_infop->hLibrary);	/* Unload DLL from memory */
-#else
 	    dlclose(lib_infop->hLibrary);	/* Unload DLL from memory */
-#endif
 	}
-#ifndef WIN32
 	free(lib_infop->LibraryName);
-#endif
 	free(lib_infop->LibraryPath);
 	free(lib_infop);
 
@@ -990,15 +747,6 @@ HBA_FreeLibrary() {
     pthread_mutex_destroy(&_hbaapi_AAE_mutex);
     pthread_mutex_destroy(&_hbaapi_AL_mutex);
     pthread_mutex_destroy(&_hbaapi_LL_mutex);
-#elif defined(WIN32)
-    DeleteCriticalSection(&_hbaapi_LL_mutex);
-    DeleteCriticalSection(&_hbaapi_AL_mutex);
-    DeleteCriticalSection(&_hbaapi_AAE_mutex);
-    DeleteCriticalSection(&_hbaapi_AE_mutex);
-    DeleteCriticalSection(&_hbaapi_APE_mutex);
-    DeleteCriticalSection(&_hbaapi_APSE_mutex);
-    DeleteCriticalSection(&_hbaapi_TE_mutex);
-    DeleteCriticalSection(&_hbaapi_LE_mutex);
 #endif
 
     return HBA_STATUS_OK;
@@ -1046,13 +794,8 @@ HBA_GetNumberOfAdapters() {
 	    continue;
 	}
 	num_adapters = ((GetNumberOfAdaptersFunc)());
-#ifndef WIN32
 	DEBUG(1, "HBAAPI: num_adapters for %s = %d\n",
 	      lib_infop->LibraryName, num_adapters, 0);
-#else
-	DEBUG(1, "HBAAPI: num_adapters for %s = %d\n",
-	      lib_infop->LibraryPath, num_adapters, 0);
-#endif
 
 	/* Also get the names of all the adapters here and cache */
 	GetAdapterNameFunc = lib_infop->functionTable.GetAdapterNameHandler;
@@ -1086,11 +829,9 @@ HBA_GetNumberOfAdapters() {
 	    adapt_infop = (HBA_ADAPTER_INFO *)
 		calloc(1, sizeof(HBA_ADAPTER_INFO));
 	    if(adapt_infop == NULL) {
-#ifndef WIN32
 		fprintf(stderr,
 			"HBA_GetNumberOfAdapters: calloc failed on sizeof:%ld\n",
 			sizeof(HBA_ADAPTER_INFO));
-#endif
 		RELEASE_MUTEX(&_hbaapi_AL_mutex);
 		RELEASE_MUTEX_RETURN(&_hbaapi_LL_mutex,
 				     _hbaapi_total_adapter_count);
@@ -1279,20 +1020,6 @@ HBA_GetWrapperLibraryAttributes (
 	    }
 	}
     }
-#elif defined(WIN32)
-    {
-	HMODULE module;
-
-	/* No need to do anything with the module handle */
-	/* It wasn't alloocated so it doesn't need to be freed */
-	module = GetModuleHandle("HBAAPI");
-	if ( module != NULL ) {
-	    if ( GetModuleFileName(module, attributes->LibPath,
-				sizeof(attributes->LibPath)) == 0 ) {
-	        attributes->LibPath[0] = '\0';
-	    }
-	}
-    }
 #endif
 #if defined(VENDOR)
     strcpy(attributes->VName, VENDOR);
@@ -1305,31 +1032,9 @@ HBA_GetWrapperLibraryAttributes (
     attributes->VVersion[0] = '\0';
 #endif
 #if defined(BUILD_DATE)
-#if defined(WIN32)
-    {
-	int matchCount;
-	matchCount = sscanf(BUILD_DATE, "%u/%u/%u %u:%u:%u",
-		&attributes->build_date.tm_year,
-		&attributes->build_date.tm_mon,
-		&attributes->build_date.tm_mday,
-		&attributes->build_date.tm_hour,
-		&attributes->build_date.tm_min,
-		&attributes->build_date.tm_sec
-	);
-
-	if ( matchCount != 6 ) {
-	    memset(&attributes->build_date, 0, sizeof(struct tm));
-	} else {
-	    attributes->build_date.tm_year -= 1900;
-	    attributes->build_date.tm_isdst = -1;
-	}
-
-    }
-#else
     if(strptime(BUILD_DATE, "%Y/%m/%d %T %Z", &(attributes->build_date)) == NULL) {
 	memset(&attributes->build_date, 0, sizeof(struct tm));
     }
-#endif
 #else
     memset(&attributes->build_date, 0, sizeof(struct tm));
 #endif
@@ -1397,11 +1102,9 @@ HBA_RegisterForAdapterAddEvents (
 	calloc(1, sizeof(HBA_ALLADAPTERSCALLBACK_ELEM));
     *callbackHandle = (HBA_CALLBACKHANDLE) cbp;
     if(cbp == NULL) {
-#ifndef WIN32
 	fprintf(stderr,
 		"HBA_RegisterForAdapterAddEvents: calloc failed for %ld bytes\n",
 		sizeof(HBA_ALLADAPTERSCALLBACK_ELEM));
-#endif
 	return HBA_STATUS_ERROR;
     }
 
@@ -1436,12 +1139,10 @@ HBA_RegisterForAdapterAddEvents (
 	vcbp = (HBA_VENDORCALLBACK_ELEM *)
 	    calloc(1, sizeof(HBA_VENDORCALLBACK_ELEM));
 	if(vcbp == NULL) {
-#ifndef WIN32
 	    fprintf(stderr,
 		    "HBA_RegisterForAdapterAddEvents: "
 		    "calloc failed for %ld bytes\n",
 		    sizeof(HBA_VENDORCALLBACK_ELEM));
-#endif
 	    freevendorhandlelist(vendorhandlelist);
 	    status = HBA_STATUS_ERROR;
 	    break;
@@ -1459,11 +1160,9 @@ HBA_RegisterForAdapterAddEvents (
 	    DEBUG(0,
 		  "HBA_RegisterForAdapterAddEvents: Library->%s, Error->%d",
 		  lib_infop->LibraryPath, status, 0);
-#ifndef WIN32
 	    fprintf(stderr,
 		    "HBA_RegisterForAdapterAddEvents: Library->%s, Error->%d",
 		    lib_infop->LibraryPath, status);
-#endif
 	    failure = status;
 	    free(vcbp);
 	    continue;
@@ -1573,11 +1272,9 @@ HBA_RegisterForAdapterEvents (
     acbp = (HBA_ADAPTERCALLBACK_ELEM *)
 	calloc(1, sizeof(HBA_ADAPTERCALLBACK_ELEM));
     if(acbp == NULL) {
-#ifndef WIN32
 	fprintf(stderr,
 		"HBA_RegisterForAdapterEvents: calloc failed for %ld bytes\n",
 		sizeof(HBA_ADAPTERCALLBACK_ELEM));
-#endif
 	RELEASE_MUTEX_RETURN(&_hbaapi_LL_mutex, HBA_STATUS_ERROR);
     }
     *callbackHandle = (HBA_CALLBACKHANDLE) acbp;
@@ -1664,12 +1361,10 @@ HBA_RegisterForAdapterPortEvents (
     acbp = (HBA_ADAPTERCALLBACK_ELEM *)
 	calloc(1, sizeof(HBA_ADAPTERCALLBACK_ELEM));
     if(acbp == NULL) {
-#ifndef WIN32
 	fprintf(stderr,
 		"HBA_RegisterForAdapterPortEvents: "
 		"calloc failed for %ld bytes\n",
 		sizeof(HBA_ADAPTERCALLBACK_ELEM));
-#endif
 	RELEASE_MUTEX_RETURN(&_hbaapi_LL_mutex, HBA_STATUS_ERROR);
 
     }
@@ -1757,12 +1452,10 @@ HBA_RegisterForAdapterPortStatEvents (
     acbp = (HBA_ADAPTERCALLBACK_ELEM *)
 	calloc(1, sizeof(HBA_ADAPTERCALLBACK_ELEM));
     if(acbp == NULL) {
-#ifndef WIN32
 	fprintf(stderr,
 		"HBA_RegisterForAdapterPortStatEvents: "
 		"calloc failed for %ld bytes\n",
 		sizeof(HBA_ADAPTERCALLBACK_ELEM));
-#endif
 	RELEASE_MUTEX_RETURN(&_hbaapi_LL_mutex, HBA_STATUS_ERROR);
     }
     *callbackHandle = (HBA_CALLBACKHANDLE) acbp;
@@ -1855,11 +1548,9 @@ HBA_RegisterForTargetEvents (
     acbp = (HBA_ADAPTERCALLBACK_ELEM *)
 	calloc(1, sizeof(HBA_ADAPTERCALLBACK_ELEM));
     if(acbp == NULL) {
-#ifndef WIN32
 	fprintf(stderr,
 		"HBA_RegisterForTargetEvents: calloc failed for %ld bytes\n",
 		sizeof(HBA_ADAPTERCALLBACK_ELEM));
-#endif
 	RELEASE_MUTEX_RETURN(&_hbaapi_LL_mutex, HBA_STATUS_ERROR);
     }
     *callbackHandle = (HBA_CALLBACKHANDLE) acbp;
@@ -1950,11 +1641,9 @@ HBA_RegisterForLinkEvents (
     acbp = (HBA_ADAPTERCALLBACK_ELEM *)
 	calloc(1, sizeof(HBA_ADAPTERCALLBACK_ELEM));
     if(acbp == NULL) {
-#ifndef WIN32
 	fprintf(stderr,
 		"HBA_RegisterForLinkEvents: calloc failed for %ld bytes\n",
 		sizeof(HBA_ADAPTERCALLBACK_ELEM));
-#endif
 	RELEASE_MUTEX_RETURN(&_hbaapi_LL_mutex, HBA_STATUS_ERROR);
     }
     *callbackHandle = (HBA_CALLBACKHANDLE) acbp;
