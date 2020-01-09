@@ -1,8 +1,8 @@
-%define buildversion 2.2.4
+%define buildversion 2.2.5
 
 Name:           libhbaapi
 Version:        2.2
-Release:        12%{?dist}
+Release:        14%{?dist}
 Summary:        SNIA HBAAPI library
 
 Group:          System Environment/Libraries
@@ -66,7 +66,7 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root,-)
 %doc readme.txt COPYING
-%config(noreplace) %{_sysconfdir}/hba.conf
+%config(noreplace) %verify(not md5 size mtime) %{_sysconfdir}/hba.conf
 %{_libdir}/*.so.*
 
 %files devel
@@ -77,6 +77,12 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Mar 27 2012 Petr Šabata <contyk@redhat.com> - 2.2-14
+- Do not verify hba.conf size, mtime and checksum (#806731)
+
+* Thu Feb 16 2012 Petr Šabata <contyk@redhat.com> - 2.2-13
+- Update to hbaapi_build 2.2.5 (#788504)
+
 * Mon Jul 25 2011 Petr Sabata <contyk@redhat.com> - 2.2-12
 - Add SNIA license
 - Related: rhbz#719585
