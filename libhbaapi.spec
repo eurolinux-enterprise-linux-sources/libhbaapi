@@ -1,6 +1,6 @@
 Name:           libhbaapi
 Version:        2.2.9
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        SNIA HBAAPI library
 Group:          System Environment/Libraries
 License:        SNIA
@@ -9,7 +9,7 @@ URL:            http://open-fcoe.org
 Source:         %{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Patch0:         libhbaapi-2.2-9-dl-linking.patch
-
+Patch1:         libhbaapi-2.2.9-portspeed.patch
 BuildRequires:  automake libtool
 
 %description
@@ -28,8 +28,8 @@ developing applications that use %{name}.
 
 %prep
 %setup
-%setup
 %patch0 -p1 -b .ld-linking
+%patch1 -p1 -b .portspeed
 
 %build
 ./bootstrap.sh
@@ -61,6 +61,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/pkgconfig/*.pc
 
 %changelog
+* Thu Dec 17 2015 Chris Leech <cleech@redhat.com> - 2.2.9-2
+- 1074125 add extended port speed definitions 
+
 * Thu Jun 20 2013 Petr Šabata <contyk@redhat.com> - 2.2.9-1
 - Update to 2.2.9, documentation and build scripts updates (#829815)
 
