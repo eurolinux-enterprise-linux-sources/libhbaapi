@@ -1,0 +1,22 @@
+This document explains how to build the sourceforge
+HBA API wraper library from source.
+
+##
+# HBA API Wrapper Library
+##########################
+
+DEPENDENCIES
+
+* autoconf
+* autotools
+* sysconftool
+* automake
+* libtool
+
+PROCESS
+
+1) Bootstrap, configure, make and make install
+   # ./bootstrap.sh
+   # rpm --eval "%configure" | sh
+   # make
+   # make install
