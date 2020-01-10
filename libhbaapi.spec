@@ -1,6 +1,6 @@
 Name:           libhbaapi
 Version:        2.2.9
-Release:        6%{?dist}
+Release:        3%{?dist}
 Summary:        SNIA HBAAPI library
 Group:          System Environment/Libraries
 License:        SNIA
@@ -8,7 +8,6 @@ URL:            http://open-fcoe.org/
 # This source was cloned from upstream git (libHBAAPI)
 Source:         %{name}-%{version}.tar.gz
 Patch0:         libhbaapi-2.2.9-dl-linking.patch
-Patch1:         libhbaapi-2.2.9-portspeed.patch
 BuildRequires:  automake libtool
 
 %description
@@ -28,7 +27,6 @@ developing applications that use %{name}.
 %prep
 %setup
 %patch0 -p1 -b .ld-linking
-%patch1 -p1 -b .portspeed
 
 %build
 ./bootstrap.sh
@@ -54,15 +52,6 @@ find %{buildroot} -name '*.la' -exec rm -f {} ';'
 %{_libdir}/pkgconfig/*.pc
 
 %changelog
-* Fri Oct 03 2014 Chris Leech <cleech@redhat.com> - 2.2.9-6
-- 1087092 sync with upstream, adds new portspeed definitions
-
-* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 2.2.9-5
-- Mass rebuild 2014-01-24
-
-* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 2.2.9-4
-- Mass rebuild 2013-12-27
-
 * Wed Jul 31 2013 Petr Šabata <contyk@redhat.com> - 2.2.9-3
 - Make the devel subpackage arch-dependent
 
