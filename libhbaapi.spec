@@ -1,6 +1,6 @@
 Name:           libhbaapi
 Version:        2.2.9
-Release:        3%{?dist}
+Release:        5%{?dist}
 Summary:        SNIA HBAAPI library
 Group:          System Environment/Libraries
 License:        SNIA
@@ -52,6 +52,12 @@ find %{buildroot} -name '*.la' -exec rm -f {} ';'
 %{_libdir}/pkgconfig/*.pc
 
 %changelog
+* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 2.2.9-5
+- Mass rebuild 2014-01-24
+
+* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 2.2.9-4
+- Mass rebuild 2013-12-27
+
 * Wed Jul 31 2013 Petr Šabata <contyk@redhat.com> - 2.2.9-3
 - Make the devel subpackage arch-dependent
 
